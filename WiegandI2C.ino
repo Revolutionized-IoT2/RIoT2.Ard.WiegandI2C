@@ -27,6 +27,8 @@
 volatile uint8_t counter;
 volatile uint64_t buffer;
 volatile bool hasNewData;
+volatile uint32_t completedCode;
+volatile uint32_t droppedFrameCount;
 
 void setup() {
   //i2c setup
@@ -45,10 +47,12 @@ void setup() {
     TCCR1 = 0; // initialize timer, stopped
     
     // Initialize our state
-    sei();
     counter = 0;
     hasNewData = false;
     buffer = 0ULL;
+    completedCode = 0;
+    droppedFrameCount = 0;
+    sei();
 }
 
 void loop() {
@@ -69,14 +73,14 @@ ISR(PCINT0_vect)
   //D0 falling edge while D1 high
   if (!(PINB & (1<<WGD_D0)) && (PINB & (1<<WGD_D1))) {
     buffer <<= 1;
-    counter++;
+    if (counter < 27) counter++;
   }
 
   //D1 falling edge while D0 high
   if (!(PINB & (1<<WGD_D1)) && (PINB & (1<<WGD_D0))) {
     buffer <<= 1;
     buffer++;
-    counter++;
+    if (counter < 27) counter++;
   }
 
 /* This does not work for some reason
@@ -99,21 +103,12 @@ void requestEvent()
       return;
     }
 
-    //convert buffer to uint8_t array
-    uint8_t *p = (uint8_t *)&buffer;
-  
-    uint8_t result[3]; //only take first 3 bytes
-    for(int i = 0; i < 3; i++) {
-      result[i] = p[i];
-    }
-    
-    TinyWireS.send(result[2]);
-    TinyWireS.send(result[1]);
-    TinyWireS.send(result[0]);
+    TinyWireS.send(static_cast<uint8_t>(completedCode >> 16));
+    TinyWireS.send(static_cast<uint8_t>(completedCode >> 8));
+    TinyWireS.send(static_cast<uint8_t>(completedCode));
 
-    buffer = 0ULL;
+    completedCode = 0;
     hasNewData = false;
-    counter = 0;
 }
 
 /**
@@ -130,7 +125,6 @@ ISR(TIM1_OVF_vect)
     if (counter != 26) {
         counter = 0;
         buffer = 0ULL;
-        hasNewData = false;
         return;
     }
 
@@ -138,11 +132,22 @@ ISR(TIM1_OVF_vect)
 }
 
 void codeReceived() {
-    // remove parity bits from the buffer
-    buffer >>= 1;
-    buffer &= ~_BV_ULL(counter - 2);
+    if (hasNewData) {
+        if (droppedFrameCount != UINT32_MAX) ++droppedFrameCount;
+    } else {
+        completedCode = static_cast<uint32_t>((buffer >> 1) & 0xFFFFFFULL);
+        hasNewData = true;
+        WGD_OUT_REG |= _BV(WGD_IRQ);
+    }
+    counter = 0;
+    buffer = 0ULL;
+}
 
-    // raise interrupt and tell data is available
-    hasNewData = true;
-    WGD_OUT_REG |= _BV(WGD_IRQ);
+// Local diagnostic API; the existing three-byte I2C response is unchanged.
+uint32_t wiegandDroppedFrames() {
+    uint8_t savedSreg = SREG;
+    cli();
+    uint32_t count = droppedFrameCount;
+    SREG = savedSreg;
+    return count;
 }

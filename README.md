@@ -94,6 +94,7 @@ compiler (a Visual Studio developer shell on Windows), run:
 
 ```powershell
 python ..\RIoT2.Ard.Shared\tests\test_firmware_p1.py
+python ..\RIoT2.Ard.Shared\tests\test_firmware_p2.py
 ```
 
 The Wiegand test compiles the production USI driver with fake AVR registers,
@@ -101,6 +102,10 @@ the actual `send()` wrapper and sketch request callback. It exercises repeated
 0/1/2/3-byte reads, NACK/repeated-START recovery, observable TX overflow, and the
 unchanged normal three-byte/empty response. It uses no board or I²C hardware;
 electrical timing and AVR integration still require a board build and hardware test.
+The P2 regression feeds real sketch interrupt handlers with synthetic bit edges:
+reading during a new frame preserves acquisition, invalid/oversized frames leave
+the pending code intact, and a second valid completed frame increments the drop
+diagnostic without replacing the first.
 
 ## Wiring summary
 
@@ -121,5 +126,11 @@ ATtiny85 PB1 (IRQ) -> host GPIO (optional, active-high "data ready" signal)
   timeouts, per the hardcoded `counter != 26` check.
 - No I2C `onReceive` handling is implemented (`TinyWireS.h`'s own TODO) — the slave only responds
   to reads, so there's no way to configure it (e.g. change the reported format) over the bus.
-- Single in-flight code: a second card swipe before the host reads the first is not queued — the
-  buffer is simply overwritten.
+- Single pending completed code: **the first complete unread frame wins**. Acquisition
+  uses separate storage, so incoming bits and malformed frames cannot alter the pending
+  code or its ready IRQ. Additional complete frames while it remains unread are discarded,
+  incrementing a saturating `droppedFrameCount`. `wiegandDroppedFrames()` provides an atomic
+  local diagnostic snapshot; it is not exposed through the unchanged three-byte I2C protocol.
+  Reading the pending code consumes it when the response is queued (including a later
+  aborted read), but never resets an in-progress acquisition. No additional frame queue
+  or parity validation is introduced.
