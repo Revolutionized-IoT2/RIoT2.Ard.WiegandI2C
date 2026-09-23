@@ -53,7 +53,8 @@ Change Activity:
 ********************************************************************************/
 
 void    usiTwiSlaveInit( uint8_t );
-void    usiTwiTransmitByte( uint8_t );
+// Returns false when the TX buffer is full; never waits inside a callback/ISR.
+bool    usiTwiTransmitByte( uint8_t );
 uint8_t usiTwiReceiveByte( void );
 bool    usiTwiDataInReceiveBuffer( void );
 void    (*_onTwiDataRequest)(void);

@@ -34,8 +34,8 @@ void USI_TWI_S::begin(uint8_t slaveAddr){ // initialize I2C lib
   usiTwiSlaveInit(slaveAddr); 
 }
 
-void USI_TWI_S::send(uint8_t data){  // send it back to master
-  usiTwiTransmitByte(data);
+bool USI_TWI_S::send(uint8_t data){  // false means the response buffer is full
+  return usiTwiTransmitByte(data);
 }
 
 uint8_t USI_TWI_S::available(){ // the bytes available that haven't been read yet
@@ -98,4 +98,3 @@ void tws_delay(unsigned long ms)
 // Preinstantiate Objects //////////////////////////////////////////////////////
 
 USI_TWI_S TinyWireS = USI_TWI_S();
-

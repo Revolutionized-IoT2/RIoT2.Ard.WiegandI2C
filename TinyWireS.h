@@ -19,7 +19,7 @@
     someByte = TinyWireS.receive(){                  // returns the next byte in the received buffer
 
   To Send:
-	TinyWireS.send(uint8_t data){                    // sends a requested byte to master
+	TinyWireS.send(uint8_t data);                    // true if queued, false if TX buffer is full
 	
   TODO:	(by others!)
 	- onReceive and onRequest handlers are not implimented.
@@ -47,7 +47,7 @@ class USI_TWI_S
   public:
  	USI_TWI_S();
     void begin(uint8_t I2C_SLAVE_ADDR);
-    void send(uint8_t data);
+    bool send(uint8_t data);
     uint8_t available();
     uint8_t receive();
     void onReceive( void (*)(uint8_t) );
@@ -61,4 +61,3 @@ void tws_delay(unsigned long);
 extern USI_TWI_S TinyWireS;
 
 #endif
-

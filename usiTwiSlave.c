@@ -406,23 +406,24 @@ bool usiTwiDataInTransmitBuffer(void)
 } // end usiTwiDataInTransmitBuffer
 
 
-// put data in the transmission buffer, wait if buffer is full
+// Put data in the transmission buffer without waiting for the ISR to drain it.
 
-void
+bool
 usiTwiTransmitByte(
   uint8_t data
 )
 {
 
-  uint8_t tmphead;
-
-  // wait for free space in buffer
-  while ( txCount == TWI_TX_BUFFER_SIZE) ;
+  if ( txCount == TWI_TX_BUFFER_SIZE )
+  {
+    return false;
+  }
 
   // store data in buffer
   txBuf[ txHead ] = data;
   txHead = ( txHead + 1 ) & TWI_TX_BUFFER_MASK;
   txCount++;
+  return true;
 
 } // end usiTwiTransmitByte
 
@@ -573,6 +574,10 @@ ISR( USI_OVERFLOW_VECTOR )
       {
         if ( USIDR & 0x01 )
         {
+          // A new read starts a new response, even after a short/aborted read.
+          txHead = 0;
+          txTail = 0;
+          txCount = 0;
           USI_REQUEST_CALLBACK();
           overflowState = USI_SLAVE_SEND_DATA;
         }

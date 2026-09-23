@@ -50,6 +50,15 @@ The pin assignments are `#define`s at the top of [WiegandI2C.ino](WiegandI2C.ino
   If no new code has been decoded since the last read, all three bytes are `0`. After a
   successful read the internal buffer is cleared and the IRQ line is dropped, so each card swipe
   is only reported once.
+- **Short/aborted reads:** every addressed read starts a fresh response. Unread bytes from
+  an earlier response are discarded before `onRequest` runs, including after a repeated START.
+  Read all three bytes in one transaction; separate one-byte reads do not resume a response.
+  The sketch still consumes the pending code when the request callback queues it, not when
+  the master finishes reading, so an aborted read does not preserve that code for retry.
+- **Transmit overflow:** `TinyWireS.send(byte)` and `usiTwiTransmitByte(byte)` return `true`
+  when the byte is queued, or `false` when the TX buffer is full. Rejected bytes do not change
+  the queued response and never block the interrupt handler. Callers producing variable-sized
+  responses must check this result. The normal three-byte callback fits the default 16-byte buffer.
 - **IRQ pin (`PB1`):** optional fast-path signal — poll it (or wire it to a host GPIO interrupt)
   instead of continuously polling over I2C. It goes high exactly when a fresh code is ready and
   low again once the host has read it.
@@ -77,6 +86,21 @@ firmwares in this repo) — flash it with the Arduino IDE:
 4. Flash via an ISP programmer (e.g. an Arduino-as-ISP, USBasp, or similar) — ATtiny85 has no USB
    or UART bootloader, so `Sketch > Upload Using Programmer` is required, not a plain serial
    upload.
+
+## Host regression tests
+
+With the sibling firmware repositories checked out, Python and a native C++14
+compiler (a Visual Studio developer shell on Windows), run:
+
+```powershell
+python ..\RIoT2.Ard.Shared\tests\test_firmware_p1.py
+```
+
+The Wiegand test compiles the production USI driver with fake AVR registers,
+the actual `send()` wrapper and sketch request callback. It exercises repeated
+0/1/2/3-byte reads, NACK/repeated-START recovery, observable TX overflow, and the
+unchanged normal three-byte/empty response. It uses no board or I²C hardware;
+electrical timing and AVR integration still require a board build and hardware test.
 
 ## Wiring summary
 
