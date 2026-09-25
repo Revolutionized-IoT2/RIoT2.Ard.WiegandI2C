@@ -62,10 +62,11 @@ The pin assignments are `#define`s at the top of [WiegandI2C.ino](WiegandI2C.ino
 - **IRQ pin (`PB1`):** optional fast-path signal — poll it (or wire it to a host GPIO interrupt)
   instead of continuously polling over I2C. It goes high exactly when a fresh code is ready and
   low again once the host has read it.
-- **Decoding:** only 26-bit Wiegand frames are accepted; the pin-change ISR shifts bits into a
-  buffer as they arrive, a hardware timer (`TIMER1`) detects end-of-frame via a timeout, and any
-  frame that doesn't end up exactly 26 bits is silently discarded (`ISR(TIM1_OVF_vect)` in
-  [WiegandI2C.ino](WiegandI2C.ino)) rather than reported as a partial/garbage code.
+- **Decoding:** only valid 26-bit Wiegand frames are accepted; the pin-change ISR shifts bits
+  into a buffer as they arrive, a hardware timer (`TIMER1`) detects end-of-frame via a timeout,
+  and any frame that doesn't end up exactly 26 bits or fails the standard Wiegand26 even/odd
+  parity checks is silently discarded (`ISR(TIM1_OVF_vect)` in [WiegandI2C.ino](WiegandI2C.ino))
+  rather than reported as a partial/garbage code.
 
 ## Build & flash
 
@@ -123,7 +124,8 @@ ATtiny85 PB1 (IRQ) -> host GPIO (optional, active-high "data ready" signal)
 ## Known limitations
 
 - Only Wiegand26 is supported — other common frame lengths (e.g. Wiegand34/37) are rejected as
-  timeouts, per the hardcoded `counter != 26` check.
+  timeouts, per the hardcoded `counter != 26` check. Wiegand26 parity is validated; bad-parity
+  26-bit frames are rejected like malformed frames.
 - No I2C `onReceive` handling is implemented (`TinyWireS.h`'s own TODO) — the slave only responds
   to reads, so there's no way to configure it (e.g. change the reported format) over the bus.
 - Single pending completed code: **the first complete unread frame wins**. Acquisition

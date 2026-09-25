@@ -30,6 +30,20 @@ volatile bool hasNewData;
 volatile uint32_t completedCode;
 volatile uint32_t droppedFrameCount;
 
+uint8_t countBits(uint64_t value, uint8_t firstBit, uint8_t bitCount) {
+    uint8_t count = 0;
+    for (uint8_t i = 0; i < bitCount; ++i) {
+        if (value & _BV_ULL(firstBit - i)) ++count;
+    }
+    return count;
+}
+
+bool hasValidWiegand26Parity(uint64_t frame) {
+    // Wiegand26 layout: P_even, 24 data bits, P_odd. The leading parity bit
+    // makes bits 25..13 even; the trailing parity bit makes bits 12..0 odd.
+    return (countBits(frame, 25, 13) % 2 == 0) && (countBits(frame, 12, 13) % 2 == 1);
+}
+
 void setup() {
   //i2c setup
     TinyWireS.begin(I2C_SLAVE_ADDR); 
@@ -123,6 +137,12 @@ ISR(TIM1_OVF_vect)
 
     //only support 26bit wiegand
     if (counter != 26) {
+        counter = 0;
+        buffer = 0ULL;
+        return;
+    }
+
+    if (!hasValidWiegand26Parity(buffer)) {
         counter = 0;
         buffer = 0ULL;
         return;
