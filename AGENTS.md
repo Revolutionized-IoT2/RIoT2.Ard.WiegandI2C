@@ -78,7 +78,7 @@ integration should expose it through `RIoT2.Ard.Shared` as an `IPeripheral` usin
 
 ## Related work
 
-- Architecture proposal [A8](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/architecture/target.md#a8-share-a-firmware-noderuntime):
+- Accepted architecture item ([ADR 0011](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/adr/0011-firmware-noderuntime.md)) [A8](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/architecture/target.md#a8-share-a-firmware-noderuntime):
   shared firmware `NodeRuntime` and future Wiegand peripheral.
 - Plan [M5](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/plans/m05-firmware-node-runtime.md):
   add `WiegandI2CPeripheral : IPeripheral` to shared firmware.
