@@ -14,14 +14,17 @@ firmware, but no ESP32 node currently integrates it.
 
 ## Commands
 
-There is no PlatformIO project or CI workflow in this repository.
-
-Build and flash with the Arduino IDE:
+Build with PlatformIO (`platformio.ini`, environment `attiny85`, 8 MHz internal clock), from the
+workspace root:
 
 ```powershell
-# Open C:\Src\RIoT2\RIoT2.Ard.WiegandI2C\WiegandI2C.ino in the Arduino IDE.
-# Select ATtiny85, 8 MHz internal clock, then use Upload Using Programmer.
+$pio = "$env:USERPROFILE\.platformio\penv\Scripts\pio.exe"
+& $pio run -d .\RIoT2.Ard.WiegandI2C                 # firmware.hex in .pio\build\attiny85
+& $pio run -d .\RIoT2.Ard.WiegandI2C -t program      # flash with a USBasp ISP programmer
 ```
+
+The Arduino IDE still works: open `WiegandI2C.ino`, select ATtiny85 with the 8 MHz internal clock,
+then use Upload Using Programmer.
 
 Run host regressions from `C:\Src\RIoT2\RIoT2.Ard.Shared` when a C++14 compiler is available:
 
@@ -30,11 +33,13 @@ python .\tests\test_firmware_p1.py
 python .\tests\test_firmware_p2.py
 ```
 
-- Build: Arduino IDE/ATtiny toolchain only; no `pio run` command exists here.
+- Build: `pio run`, or the Arduino IDE. The sketch stays in the repository root (`src_dir = .`).
 - Test: shared native tests compile the production USI driver and sketch callbacks with fake AVR
   registers.
 - Run: no host runtime exists.
-- Release: no CI workflow or git tags are present. Flash via ISP programmer for hardware use.
+- CI and release: `ci.yml` builds every firmware project and runs the native tests on every push.
+  A `x.y.z` tag runs `release.yml`, which attaches `firmware-attiny85-<tag>.hex` and `SHA256SUMS`
+  to a GitHub release ([CI guide](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/guides/ci.md)). Flash it with an ISP programmer.
 
 ## Layout
 

@@ -36,7 +36,12 @@ local `wiegandDroppedFrames()` diagnostic.
 
 ## Build and flash
 
-This is a plain Arduino sketch, not a PlatformIO project.
+Build with PlatformIO from the workspace root: `pio run -d RIoT2.Ard.WiegandI2C` writes
+`.pio/build/attiny85/firmware.hex`, and `-t program` flashes it with a USBasp ISP programmer. CI
+builds it on every push, and a `x.y.z` tag attaches `firmware-attiny85-<tag>.hex` to a GitHub
+release.
+
+Or use the Arduino IDE:
 
 1. Install an ATtiny board package such as ATTinyCore in the Arduino IDE.
 2. Open [WiegandI2C.ino](WiegandI2C.ino).
