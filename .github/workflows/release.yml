@@ -1,0 +1,17 @@
+name: Release
+
+# Push a x.y.z tag to attach firmware-attiny85-<tag>.hex and SHA256SUMS to a GitHub release.
+# Flash it with an ISP programmer (see README).
+
+on:
+  push:
+    tags: ["*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  firmware:
+    uses: Revolutionized-IoT2/.github/.github/workflows/firmware-release.yml@main
+    with:
+      project: RIoT2.Ard.WiegandI2C
