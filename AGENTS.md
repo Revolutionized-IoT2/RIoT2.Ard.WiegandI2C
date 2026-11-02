@@ -52,8 +52,8 @@ python .\tests\test_firmware_p2.py
 
 ## Contracts consumed here
 
-This repository does not currently implement platform MQTT, HTTP or configuration contracts. Future
-integration should expose it through `RIoT2.Ard.Shared` as an `IPeripheral` using:
+This repository implements no platform MQTT, HTTP or configuration contract itself. The ESP32 side
+is `WiegandI2CPeripheral` in `RIoT2.Ard.Shared` (I42), an `IPeripheral` that follows:
 
 - [configuration.md](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/contracts/configuration.md)
   for the peripheral template.
@@ -62,7 +62,8 @@ integration should expose it through `RIoT2.Ard.Shared` as an `IPeripheral` usin
 
 ## Rules
 
-- Keep this sketch standalone until a `WiegandI2CPeripheral` is added to `RIoT2.Ard.Shared`.
+- Keep this sketch standalone. Its reader is `WiegandI2CPeripheral` in `RIoT2.Ard.Shared`, whose
+  `tests/wiegand_peripheral.cpp` runs both together: change the protocol in both.
 - Do not add ESP32 or PlatformIO dependencies to this repository.
 - Keep I2C address `0x26` and the three-byte response stable unless the hub feature/design is
   updated with a migration.
@@ -79,13 +80,10 @@ integration should expose it through `RIoT2.Ard.Shared` as an `IPeripheral` usin
 - ATtiny85 has no hardware I2C/TWI peripheral; the bundled USI driver requires external pull-ups.
 - `droppedFrameCount` is only a local diagnostic exposed by `wiegandDroppedFrames()`; it is not
   part of the three-byte I2C response.
-- This bridge is not yet wired into M5Core2 or M5Dial firmware.
 
 ## Related work
 
 - Accepted architecture item ([ADR 0011](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/adr/0011-firmware-noderuntime.md)) [A8](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/architecture/target.md#a8-share-a-firmware-noderuntime):
-  shared firmware `NodeRuntime` and future Wiegand peripheral.
+  shared firmware `NodeRuntime` and the Wiegand peripheral (done in I42).
 - Plan [M5](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/plans/m05-firmware-node-runtime.md):
-  add `WiegandI2CPeripheral : IPeripheral` to shared firmware.
-- [Feature ideas](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/features.md#firmware):
-  integrate `WiegandI2C` as an I2C `0x26` peripheral with an optional IRQ pin.
+  step 4, `WiegandI2CPeripheral : IPeripheral` in shared firmware (done in I42).

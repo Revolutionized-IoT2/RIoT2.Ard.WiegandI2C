@@ -1,12 +1,11 @@
 # RIoT2.Ard.WiegandI2C
 
 Standalone ATtiny85 Arduino sketch that decodes a 26-bit Wiegand card reader and exposes the
-decoded 24-bit code over I2C. It is a small hardware bridge for future RIoT2 firmware peripherals;
-it is not currently integrated into the ESP32 node firmware.
-
-The planned platform integration is tracked in the hub
-[firmware feature ideas](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/features.md#firmware)
-and [M5 shared firmware runtime plan](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/plans/m05-firmware-node-runtime.md).
+decoded 24-bit code over I2C. The M5Core2 and M5Dial firmware (0.6.0 and newer) read it with the
+shared `WiegandI2CPeripheral` ([I42](https://github.com/Revolutionized-IoT2/.github/blob/main/docs/increments/phase-3-4.md#i42-wiegand-peripheral-s)): plug the module into the board's Grove PORT.A and
+add the *Wiegand Reader* peripheral to the node's configuration; every card read becomes a text
+report. Parameters and formats:
+[RIoT2.Ard.Shared](https://github.com/Revolutionized-IoT2/RIoT2.Ard.Shared#firmware-behavior-supplied-here).
 
 ## Hardware
 
@@ -80,6 +79,10 @@ ATtiny85 PB0 (SDA) -> host SDA with pull-up to logic rail
 ATtiny85 PB2 (SCL) -> host SCL with pull-up to logic rail
 ATtiny85 PB1 (IRQ) -> host GPIO, optional active-high data-ready signal
 ```
+
+On the M5 boards, SDA and SCL are Grove PORT.A (A1 and A2) and the IRQ goes to B1 or B2. The ESP32
+pins aren't 5 V tolerant: run the ATtiny from 3.3 V (fine at its 8 MHz internal clock), or
+level-shift the bus and IRQ.
 
 ## Limits
 
